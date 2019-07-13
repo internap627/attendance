@@ -1,24 +1,70 @@
 import React from 'react';
-import logo from './logo.svg';
+import { useEffect, useState } from 'react';
+import * as handTrack from 'handtrackjs';
 import './App.css';
 
-function App() {
+function App () {
+  const modelParams = {
+    flipHorizontal: true, // flip e.g for video
+    imageScaleFactor: 0.7, // reduce input image size for gains in speed.
+    maxNumBoxes: 1, // maximum number of boxes to detect
+    iouThreshold: 0.5, // ioU threshold for non-max suppression
+    scoreThreshold: 0.79 // confidence threshold for predictions.
+  };
+  let videoEl = null;
+  let canvasEl = null;
+  let model;
+  let text = '';
+
+  const [handStr, setHand] = useState('');
+
+  useEffect(() => {
+    handTrack.load(modelParams).then(lModel => {
+      model = lModel;
+      handTrack.startVideo(videoEl).then(status => {
+        if (status) {
+          navigator.getUserMedia(
+            { video: {} },
+            stream => {
+              videoEl.srcObject = stream;
+              setInterval(runDetection, 2000);
+            },
+            err => console.log(err)
+          );
+        }
+      });
+    });
+  });
+
+  const setText = str => {
+    setHand(str);
+  };
+
+  const runDetection = () => {
+    setHand(text);
+    model.detect(videoEl).then(predictions => {
+      let num = predictions.length;
+      text = num > 0 ? 'Hand detected' : 'No hands detected';
+      console.log(text);
+    });
+  };
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className='App'>
+      <video
+        id='video'
+        ref={video => {
+          videoEl = video;
+        }}
+      />
+      <canvas
+        id='canvas'
+        ref={canvas => {
+          canvasEl = canvas;
+        }}
+      />
+      <div>
+        {handStr}
+      </div>
     </div>
   );
 }
