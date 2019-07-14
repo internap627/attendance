@@ -16,7 +16,7 @@ function App () {
   let model;
   let text = '';
 
-  const [handStr, setHand] = useState('');
+  const [handStr, setHand] = useState('works');
 
   useEffect(() => {
     handTrack.load(modelParams).then(lModel => {
@@ -27,7 +27,7 @@ function App () {
             { video: {} },
             stream => {
               videoEl.srcObject = stream;
-              setInterval(runDetection, 2000);
+              setInterval(runDetection, 1000);
             },
             err => console.log(err)
           );
@@ -36,16 +36,12 @@ function App () {
     });
   });
 
-  const setText = str => {
-    setHand(str);
-  };
-
   const runDetection = () => {
-    setHand(text);
+    if (!videoEl) return;
     model.detect(videoEl).then(predictions => {
       let num = predictions.length;
       text = num > 0 ? 'Hand detected' : 'No hands detected';
-      console.log(text);
+      setHand(text);
     });
   };
   return (
@@ -63,7 +59,11 @@ function App () {
         }}
       />
       <div>
-        {handStr}
+        <h1>
+          <strong>
+            Status: {handStr}
+          </strong>
+        </h1>
       </div>
     </div>
   );
